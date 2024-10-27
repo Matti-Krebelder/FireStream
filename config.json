@@ -1,0 +1,21 @@
+{
+"General":{
+    "Companyname": "Firestream"
+    },
+"Auth": {
+    "Login": true,
+    "Register": false,
+    "Emailverify": false
+},
+"Database": {
+    "Host": "localhost",
+    "Name": "Firestream",
+    "User": "root",
+    "Password": "password"
+},
+    "SMTP": {
+    "Host": "localhost",
+    "Port": 587,
+    "User": "user",
+    "Password": "password"
+}}
