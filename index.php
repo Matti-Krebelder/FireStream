@@ -54,15 +54,12 @@ function renderStarRating($rating) {
     for($i = 0; $i < $fullStars; $i++) {
         $html .= '<i class="fas fa-star"></i>';
     }
-    
     if($hasHalfStar) {
         $html .= '<i class="fas fa-star-half-alt"></i>';
     }
-    
     for($i = 0; $i < $emptyStars; $i++) {
         $html .= '<i class="far fa-star"></i>';
     }
-    
     $html .= '</div>';
     return $html;
 }

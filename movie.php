@@ -14,10 +14,9 @@ function getMovieDetails($title) {
             
             if($detailsResponse) {
                 $details = json_decode($detailsResponse, true);
-                // Clean filename: remove special characters but keep spaces and numbers
                 $cleanFileName = $details['title'];
-                $cleanFileName = preg_replace('/[:\?\"\'\/\\\\]/', '', $cleanFileName); // Remove common special characters
-                $cleanFileName = strtolower($cleanFileName); // Convert to lowercase
+                $cleanFileName = preg_replace('/[:\?\"\'\/\\\\]/', '', $cleanFileName);
+                $cleanFileName = strtolower($cleanFileName);
                 return [
                     'title' => $details['title'],
                     'clean_filename' => $cleanFileName,
@@ -41,22 +40,15 @@ function renderStarRating($rating) {
     $emptyStars = 5 - ceil($rating);
     
     $html = '<div class="rating">';
-    
-    // Full stars
     for($i = 0; $i < $fullStars; $i++) {
         $html .= '<i class="fas fa-star"></i>';
     }
-    
-    // Half star
     if($hasHalfStar) {
         $html .= '<i class="fas fa-star-half-alt"></i>';
     }
-    
-    // Empty stars
     for($i = 0; $i < $emptyStars; $i++) {
         $html .= '<i class="far fa-star"></i>';
     }
-    
     $html .= '</div>';
     return $html;
 }
@@ -82,15 +74,15 @@ $movieData = getMovieDetails($movieTitle);
     <!-- Open Graph Meta Tags for Social Media -->
     <meta property="og:title" content="Fire Stream - Your Streaming Service for Movies and Series">
     <meta property="og:description" content="Discover the latest movies and series on Fire Stream. Subscribe now and start streaming immediately!">
-    <meta property="og:image" content="/images/logo.png"> <!-- Logo image for Open Graph -->
-    <meta property="og:url" content="https://www.firestream.com"> <!-- Replace with the actual URL -->
+    <meta property="og:image" content="/images/logo.png">
+    <meta property="og:url" content="https://www.firestream.com">
     <meta property="og:type" content="website">
     
     <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Fire Stream - Your Streaming Service for Movies and Series">
     <meta name="twitter:description" content="Discover the latest movies and series on Fire Stream. Subscribe now and start streaming immediately!">
-    <meta name="twitter:image" content="/images/logo.png"> <!-- Logo image for Twitter -->
+    <meta name="twitter:image" content="/images/logo.png">
     
     <!-- Additional Meta Tags -->
     <link rel="canonical" href="https://www.firestream.com">
@@ -113,38 +105,35 @@ $movieData = getMovieDetails($movieTitle);
             background-color: var(--main-color);
             color: var(--text-color);
         }
-        /* Hide scrollbar for Chrome, Safari, and Opera */
-body::-webkit-scrollbar {
-    display: none; /* Hides the scrollbar */
-}
+        body::-webkit-scrollbar {
+            display: none;
+        }
 
-/* Hide scrollbar for IE and Edge */
-body {
-    -ms-overflow-style: none; /* IE and Edge */
-    overflow-y: scroll; /* Allows vertical scrolling */
-}
+        body {
+            -ms-overflow-style: none; 
+            overflow-y: scroll; 
+        }
 
-/* Hide scrollbar for Firefox */
-body {
-    scrollbar-width: none; /* Firefox */
-    overflow-y: scroll; /* Allows vertical scrolling */
-}
-        /* Hide scrollbar for Chrome, Safari, and Opera */
-.scrollable-element::-webkit-scrollbar {
-    display: none; /* Hides the scrollbar */
-}
+        body {
+            scrollbar-width: none; 
+            overflow-y: scroll; 
+        }
 
-/* Hide scrollbar for IE and Edge */
-.scrollable-element {
-    -ms-overflow-style: none; /* IE and Edge */
-    overflow-y: scroll; /* Allows vertical scrolling */
-}
+        .scrollable-element::-webkit-scrollbar {
+            display: none; 
+        }
 
-/* Hide scrollbar for Firefox */
-.scrollable-element {
-    scrollbar-width: none; /* Firefox */
-    overflow-y: scroll; /* Allows vertical scrolling */
-}
+
+        .scrollable-element {
+            -ms-overflow-style: none; 
+            overflow-y: scroll; 
+        }
+
+
+        .scrollable-element {
+            scrollbar-width: none; 
+            overflow-y: scroll; 
+        }
 
         .header {
             display: flex;
@@ -345,7 +334,6 @@ body {
             transform: scale(1.05);
         }
 
-        /* Video Player Styles */
         .video-container {
             position: fixed;
             top: 0;
@@ -370,13 +358,13 @@ body {
     padding: 1rem;
     background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
     transition: opacity 0.3s ease;
-    z-index: 2002; /* Ensure controls are above pause overlay */
+    z-index: 2002; 
 }
 
         .video-info {
     position: absolute;
     top: 0;
-    left: 4rem; /* Add space for back button */
+    left: 4rem; 
     right: 0;
     padding: 1rem;
     background: linear-gradient(rgba(0, 0, 0, 0.7), transparent);
@@ -450,7 +438,7 @@ body {
 
 .paused-info {
     position: absolute;
-    left: 2rem;  /* Links ausgerichtet */
+    left: 2rem; 
     top: 50%;
     transform: translateY(-50%);
     text-align: left;
@@ -596,9 +584,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let hideControlsTimeout;
     let lastVolume = 1;
     let isControlsHovered = false;
-    let lastCurrentTime = 0; // Store the last known video position
+    let lastCurrentTime = 0; 
 
-    // Add the styles for z-index fixes
+
     const updateStyles = `
         <style>
             .video-info, .back-button {
@@ -654,25 +642,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Video preview functionality
     function updateVideoPreview(time) {
         const canvas = document.createElement('canvas');
         canvas.width = 160;
         canvas.height = 90;
         const ctx = canvas.getContext('2d');
         
-        // Store current time
         lastCurrentTime = video.currentTime;
         
-        // Seek to preview time and capture frame
         video.currentTime = time;
         
         return new Promise((resolve) => {
             video.addEventListener('seeked', function onSeeked() {
                 video.removeEventListener('seeked', onSeeked);
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                
-                // Restore original time
                 video.currentTime = lastCurrentTime;
                 
                 resolve(canvas.toDataURL());
@@ -680,7 +663,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Event Listeners
     videoContainer.addEventListener('mousemove', () => {
         toggleControls(true);
         startHideControlsTimer();
@@ -734,17 +716,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const previewTimeValue = Math.floor(pos * video.duration);
         
         previewContainer.style.display = 'block';
+
         previewContainer.style.left = `${e.clientX}px`;
-        
-        // Update preview time
         const timeString = formatTime(previewTimeValue);
         previewTime.textContent = timeString;
         
-        // Update preview progress bar
         previewProgress.style.display = 'block';
         previewProgress.style.width = `${pos * 100}%`;
         
-        // Update preview thumbnail with debounce
         if (video.readyState >= 4 && !isPreviewSeeking) {
             isPreviewSeeking = true;
             try {
@@ -823,7 +802,6 @@ document.addEventListener('DOMContentLoaded', () => {
         toggleControls(true);
     });
 
-    // Keyboard controls
     document.addEventListener('keydown', (e) => {
         if (videoContainer.style.display === 'block') {
             switch(e.key.toLowerCase()) {
@@ -855,8 +833,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
-
-    // Exit video on Escape key
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && videoContainer.style.display === 'block') {
             if (!document.fullscreenElement) {
@@ -866,7 +842,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Share button functionality
     document.querySelector('.btn-secondary:nth-child(3)').addEventListener('click', () => {
         if (navigator.share) {
             navigator.share({
@@ -885,7 +860,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Download button functionality
     document.querySelector('.btn-secondary:nth-child(2)').addEventListener('click', () => {
         const link = document.createElement('a');
         link.href = video.querySelector('source').src;
