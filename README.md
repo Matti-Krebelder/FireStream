@@ -4,8 +4,8 @@
 Simple Streaming Application in PHP with Automated Movie Detection and Display of Metadata such as Rating, Movie Description, and Release Date.
 
 ## Features:
-Automated Movie Detection
-Login System
+Automated Movie Detection \n
+Login System \n
 Nextcloud integration (soon)
 
 
