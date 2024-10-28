@@ -32,3 +32,6 @@ Nextcloud integration (soon)
 
 
 ![App Screenshot](http://node.starlight-studios.de:2006/images/FireStream/s7.png)
+
+
+![App Screenshot](http://node.starlight-studios.de:2006/images/FireStream/s8.png)

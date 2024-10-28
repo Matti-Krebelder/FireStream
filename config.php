@@ -1,9 +1,9 @@
 <?php
 // Database Configuration
-define('DB_HOST', '212.132.70.166:3306');
-define('DB_USER', 'u16_4xtuqa99HU');
-define('DB_PASS', 'anyHc!8kw4!.XBaliO+pBOjt');
-define('DB_NAME', 's16_FireStream');
+define('DB_HOST', 'localhost');
+define('DB_USER', 'username');
+define('DB_PASS', 'password');
+define('DB_NAME', 'dbname');
 
 // Login System Configuration
 define('LOGIN_SYSTEM_ENABLED', true);
