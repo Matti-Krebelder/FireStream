@@ -14,57 +14,72 @@ class Auth {
         if (!LOGIN_SYSTEM_ENABLED) {
             return ['success' => false, 'message' => 'Login system is disabled'];
         }
-
+    
         if ($this->isAccountLocked($email)) {
             return ['success' => false, 'message' => 'Account is temporarily locked. Please try again later.'];
         }
-
+    
         try {
             $stmt = $this->db->prepare("SELECT id, email, password, is_active FROM users WHERE email = ?");
             $stmt->execute([$email]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            if ($user && password_verify($password, $user['password'])) {
-                if (!$user['is_active']) {
-                    return ['success' => false, 'message' => 'Account is not activated'];
-                }
-
-                $this->resetLoginAttempts($email);
-                $this->createSession($user);
-
-                $stmt = $this->db->prepare("
-                    INSERT INTO login_history (user_id, ip_address, success) 
-                    VALUES (?, ?, ?)
-                ");
-                $stmt->execute([
-                    $user['id'], 
-                    $_SERVER['REMOTE_ADDR'], 
-                    true
-                ]);
-
-                return ['success' => true, 'message' => 'Login successful'];
-            } else {
-                $this->incrementLoginAttempts($email);
-
-                if ($user) {
+    
+            if ($user) {
+                if (password_verify($password, $user['password'])) {
+                    if (!$user['is_active']) {
+                        return ['success' => false, 'message' => 'Account is not activated'];
+                    }
+    
+                    $this->resetLoginAttempts($email);
+                    $this->createSession($user);
+    
                     $stmt = $this->db->prepare("
-                        INSERT INTO login_history (user_id, ip_address, success) 
-                        VALUES (?, ?, ?)
+                        INSERT INTO login_history (user_id, ip_address, login_time, success) 
+                        VALUES (?, ?, NOW(), ?)
                     ");
                     $stmt->execute([
                         $user['id'], 
                         $_SERVER['REMOTE_ADDR'], 
-                        false
+                        1 
                     ]);
+    
+                    return ['success' => true, 'message' => 'Login successful'];
+                } else {
+                    $this->incrementLoginAttempts($email);
+                    
+                    $stmt = $this->db->prepare("
+                        INSERT INTO login_history (user_id, ip_address, login_time, success) 
+                        VALUES (?, ?, NOW(), ?)
+                    ");
+                    $stmt->execute([
+                        $user['id'], 
+                        $_SERVER['REMOTE_ADDR'], 
+                        0 
+                    ]);
+                    
+                    return ['success' => false, 'message' => 'Wrong password'];
                 }
-
-                return ['success' => false, 'message' => 'Invalid email or password'];
+            } else {
+                $this->incrementLoginAttempts($email);
+                
+                $stmt = $this->db->prepare("
+                    INSERT INTO login_history (user_id, ip_address, login_time, success) 
+                    VALUES (?, ?, NOW(), ?)
+                ");
+                $stmt->execute([
+                    null, 
+                    $_SERVER['REMOTE_ADDR'], 
+                    0 
+                ]);
+                
+                return ['success' => false, 'message' => 'Email not found'];
             }
         } catch (PDOException $e) {
             error_log("Login error: " . $e->getMessage());
             return ['success' => false, 'message' => 'An error occurred during login'];
         }
     }
+    
 
     private function isAccountLocked($email) {
         if (!isset($this->loginAttempts[$email])) {
@@ -138,7 +153,6 @@ class Auth {
         }
 
         try {
-            // Verify current password
             $stmt = $this->db->prepare("SELECT password FROM users WHERE id = ?");
             $stmt->execute([$userId]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -147,7 +161,6 @@ class Auth {
                 return ['success' => false, 'message' => 'Current password is incorrect'];
             }
 
-            // Hash and update new password
             $hashedPassword = password_hash($newPassword, PASSWORD_HASH_ALGO);
             $stmt = $this->db->prepare("UPDATE users SET password = ? WHERE id = ?");
             $stmt->execute([$hashedPassword, $userId]);
@@ -161,17 +174,41 @@ class Auth {
 
     public function getLoginHistory($userId, $limit = 5) {
         try {
+            error_log("Getting login history for user ID: " . $userId);
+            
             $stmt = $this->db->prepare("
-                SELECT ip_address, login_time, success 
+                SELECT id, user_id, ip_address, login_time, success 
                 FROM login_history 
-                WHERE user_id = ? 
+                WHERE user_id = :user_id 
                 ORDER BY login_time DESC 
-                LIMIT ?
+                LIMIT :limit
             ");
-            $stmt->execute([$userId, $limit]);
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            $stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            
+            $success = $stmt->execute();
+            
+            if (!$success) {
+                error_log("Failed to execute login history query");
+                return [];
+            }
+            
+            $history = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            error_log("Found " . count($history) . " login history entries");
+            
+            if (empty($history)) {
+                error_log("No login history found for user_id: " . $userId);
+            } else {
+                error_log("Login history retrieved successfully");
+            }
+            
+            return $history;
+            
         } catch (PDOException $e) {
             error_log("Error fetching login history: " . $e->getMessage());
+            error_log("SQL State: " . $e->errorInfo[0]);
             return [];
         }
     }

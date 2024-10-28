@@ -185,6 +185,10 @@ body {
 
 .login-details {
     flex-grow: 1;
+    color: white;
+}
+.login-details-text{
+    color: white;
 }
 
 .login-details small {

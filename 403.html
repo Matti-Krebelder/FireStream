@@ -162,7 +162,6 @@
 </head>
 <body>
     <div class="particles">
-        <!-- Particles werden durch JS generiert -->
     </div>
     <div class="error-container">
         <i class="fas fa-shield-alt error-icon"></i>
@@ -177,7 +176,6 @@
     </div>
 
     <script>
-        // Partikel-Animation
         function createParticles() {
             const particlesContainer = document.querySelector('.particles');
             const numberOfParticles = 50;
@@ -185,22 +183,18 @@
             for (let i = 0; i < numberOfParticles; i++) {
                 const particle = document.createElement('div');
                 particle.className = 'particle';
-                
-                // Zufällige Position
+            
                 particle.style.left = Math.random() * 100 + 'vw';
                 particle.style.top = Math.random() * 100 + 'vh';
                 
-                // Zufällige Animation-Dauer
                 particle.style.animationDuration = (Math.random() * 15 + 5) + 's';
                 
-                // Zufällige Verzögerung
                 particle.style.animationDelay = (Math.random() * 5) + 's';
                 
                 particlesContainer.appendChild(particle);
             }
         }
 
-        // Partikel erstellen
         createParticles();
     </script>
 </body>

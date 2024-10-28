@@ -1,16 +1,28 @@
 <?php
 require_once 'config.php';
 require_once 'classes/Auth.php';
-
 $auth = new Auth();
+
 if (!$auth->isLoggedIn()) {
     header('Location: login.php');
     exit;
 }
 
-$userId = $_SESSION['user_id'];
+$userId = $_SESSION['user_id'] ?? null;
+
+if (!$userId) {
+    error_log("No user ID found in session");
+    header('Location: logout.php');
+    exit;
+}
+
+error_log("Profile page accessed by user ID: " . $userId);
+
 $userData = $auth->getUserData($userId);
 $loginHistory = $auth->getLoginHistory($userId);
+
+error_log("User data retrieved: " . ($userData ? 'yes' : 'no'));
+error_log("Login history entries: " . count($loginHistory));
 
 $message = '';
 $messageClass = '';
@@ -43,10 +55,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     <header class="header">
         <a href="index.php" class="logo">FireStream</a>
         <div class="nav-icons">
-        <a href="index.php" class="icon"><i class="fas fa-home"></i></a>
-        <a href="profile.php" class="icon"><i class="fas fa-user"></i></a>
-        <a href="settings.php" class="icon"><i class="fas fa-cog"></i></a>
-        <a href="logout.php" class="icon"><i class="fas fa-sign-out-alt"></i></a>
+            <a href="index.php" class="icon"><i class="fas fa-home"></i></a>
+            <a href="profile.php" class="icon"><i class="fas fa-user"></i></a>
+            <a href="settings.php" class="icon"><i class="fas fa-cog"></i></a>
+            <a href="logout.php" class="icon"><i class="fas fa-sign-out-alt"></i></a>
         </div>
     </header>
 
@@ -55,8 +67,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             <div class="profile-avatar">
                 <i class="fas fa-user"></i>
             </div>
-            <h1><?php echo htmlspecialchars($userData['email']); ?></h1>
-            <p>Member since <?php echo date('F Y', strtotime($userData['created_at'])); ?></p>
+            <h1><?php echo htmlspecialchars($userData['email'] ?? ''); ?></h1>
+            <p>Member since <?php echo isset($userData['created_at']) ? date('F Y', strtotime($userData['created_at'])) : 'N/A'; ?></p>
         </div>
 
         <?php if ($message): ?>
@@ -88,20 +100,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         <div class="profile-section">
             <h2>Recent Login Activity</h2>
             <div class="login-history">
-                <?php foreach ($loginHistory as $login): ?>
-                    <div class="login-entry <?php echo $login['success'] ? 'success' : 'failed'; ?>">
-                        <div class="login-icon">
-                            <i class="fas <?php echo $login['success'] ? 'fa-check' : 'fa-times'; ?>"></i>
+                <?php if (is_array($loginHistory) && count($loginHistory) > 0): ?>
+                    <?php foreach ($loginHistory as $login): ?>
+                        <div class="login-entry <?php echo $login['success'] ? 'success' : 'failed'; ?>">
+                            <div class="login-icon">
+                                <i class="fas <?php echo $login['success'] ? 'fa-check' : 'fa-times'; ?>"></i>
+                            </div>
+                            <div class="login-details">
+                                <p class="login-details-text"><?php echo $login['success'] ? 'Successful login' : 'Failed login attempt'; ?></p>
+                                <small>
+                                    <?php 
+                                    $loginTime = strtotime($login['login_time']);
+                                    echo $loginTime ? date('F j, Y H:i', $loginTime) : 'Invalid date';
+                                    ?>
+                                    from IP: <?php echo htmlspecialchars($login['ip_address']); ?>
+                                </small>
+                            </div>
                         </div>
-                        <div class="login-details">
-                            <p><?php echo $login['success'] ? 'Successful login' : 'Failed login attempt'; ?></p>
-                            <small>
-                                <?php echo date('F j, Y H:i', strtotime($login['login_time'])); ?>
-                                from IP: <?php echo htmlspecialchars($login['ip_address']); ?>
-                            </small>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <p>No login history available. (User ID: <?php echo htmlspecialchars($userId); ?>)</p>
+                <?php endif; ?>
             </div>
         </div>
     </main>
