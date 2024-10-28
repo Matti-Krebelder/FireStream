@@ -1,4 +1,10 @@
 <?php
+require_once 'classes/Auth.php';
+$auth = new Auth();
+if (!$auth->isLoggedIn()) {
+    header('Location: login.php');
+    exit;
+}
 function cleanMovieTitle($title) {
     $title = pathinfo($title, PATHINFO_FILENAME);
     $title = str_replace(['.', '_'], ' ', $title);
@@ -111,8 +117,8 @@ function renderMovieCard($movie) {
         :root {
             --main-color: #050301;
             --text-color: #ffffff;
-            --hover-color: #1a1511;
-            --accent-color: #2a2521;
+            --hover-color: #151516;
+            --accent-color: #00010a;
         }
 
         * {

@@ -1,4 +1,10 @@
 <?php
+require_once 'classes/Auth.php';
+$auth = new Auth();
+if (!$auth->isLoggedIn()) {
+    header('Location: login.php');
+    exit;
+}
 function getMovieDetails($title) {
     $apiKey = '4b94f857a0c0c333c98dbd3e1a937e85';
     $searchUrl = "https://api.themoviedb.org/3/search/movie?api_key={$apiKey}&query=" . urlencode($title);
@@ -88,10 +94,10 @@ $movieData = getMovieDetails($movieTitle);
     <link rel="canonical" href="https://www.firestream.com">
     <style>
         :root {
-            --main-color: #0D0907;
+            --main-color: #050301;
             --text-color: #ffffff;
-            --hover-color: #1a1511;
-            --accent-color: #2a2521;
+            --hover-color: #00010a;
+            --accent-color: #00010a;
         }
 
         * {
@@ -280,7 +286,7 @@ $movieData = getMovieDetails($movieTitle);
 
         .movie-info {
             max-width: 800px;
-            background-color: rgba(13, 9, 7, 0.9);
+            background-color: #050301e3;
             padding: 2rem;
             border-radius: 10px;
         }
@@ -603,23 +609,26 @@ document.addEventListener('DOMContentLoaded', () => {
     document.head.insertAdjacentHTML('beforeend', updateStyles);
 
     function toggleControls(show) {
-        const elements = [controls, videoInfo, backButton];
-        elements.forEach(el => {
-            el.classList.toggle('hide-controls', !show);
-        });
-    }
+    const elements = [controls, videoInfo, backButton];
+    elements.forEach(el => {
+        el.classList.toggle('hide-controls', !show);
+    });
 
-    function startHideControlsTimer() {
-        if (isControlsHovered || video.paused) return;
-        
-        clearTimeout(hideControlsTimeout);
-        toggleControls(true);
-        hideControlsTimeout = setTimeout(() => {
-            if (!video.paused && !isControlsHovered) {
-                toggleControls(false);
-            }
-        }, 3000);
-    }
+    // Mauszeiger ausblenden oder anzeigen
+    document.body.style.cursor = show ? 'auto' : 'none';
+}
+
+function startHideControlsTimer() {
+    if (isControlsHovered || video.paused) return;
+
+    clearTimeout(hideControlsTimeout);
+    toggleControls(true);
+    hideControlsTimeout = setTimeout(() => {
+        if (!video.paused && !isControlsHovered) {
+            toggleControls(false);
+        }
+    }, 3000);
+}
 
     function formatTime(seconds) {
         const hours = Math.floor(seconds / 3600);
