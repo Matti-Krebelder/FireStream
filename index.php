@@ -109,7 +109,7 @@ function renderMovieCard($movie) {
     
     <style>
         :root {
-            --main-color: #0D0907;
+            --main-color: #050301;
             --text-color: #ffffff;
             --hover-color: #1a1511;
             --accent-color: #2a2521;
