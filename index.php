@@ -293,6 +293,10 @@ function renderMovieCard($movie) {
                 padding-left: 1rem;
             }
         }
+        .icon {
+        color: white;
+        text-decoration: none;
+    }
     </style>
 </head>
 <body>
@@ -303,8 +307,10 @@ function renderMovieCard($movie) {
                 <input type="text" class="search-input" placeholder="Suchen...">
                 <i class="fas fa-search icon search-icon"></i>
             </div>
-            <i class="fas fa-user icon"></i>
-            <i class="fas fa-cog icon"></i>
+            <a href="index.php" class="icon"><i class="fas fa-home"></i></a>
+        <a href="profile.php" class="icon active"><i class="fas fa-user"></i></a>
+        <a href="settings.php" class="icon"><i class="fas fa-cog"></i></a>
+        <a href="logout.php" class="icon"><i class="fas fa-sign-out-alt"></i></a>
         </div>
     </header>
 

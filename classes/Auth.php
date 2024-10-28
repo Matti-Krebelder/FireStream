@@ -31,10 +31,33 @@ class Auth {
 
                 $this->resetLoginAttempts($email);
                 $this->createSession($user);
-                
+
+                $stmt = $this->db->prepare("
+                    INSERT INTO login_history (user_id, ip_address, success) 
+                    VALUES (?, ?, ?)
+                ");
+                $stmt->execute([
+                    $user['id'], 
+                    $_SERVER['REMOTE_ADDR'], 
+                    true
+                ]);
+
                 return ['success' => true, 'message' => 'Login successful'];
             } else {
                 $this->incrementLoginAttempts($email);
+
+                if ($user) {
+                    $stmt = $this->db->prepare("
+                        INSERT INTO login_history (user_id, ip_address, success) 
+                        VALUES (?, ?, ?)
+                    ");
+                    $stmt->execute([
+                        $user['id'], 
+                        $_SERVER['REMOTE_ADDR'], 
+                        false
+                    ]);
+                }
+
                 return ['success' => false, 'message' => 'Invalid email or password'];
             }
         } catch (PDOException $e) {
@@ -96,5 +119,60 @@ class Auth {
 
         $_SESSION['last_activity'] = time();
         return true;
+    }
+
+    public function getUserData($userId) {
+        try {
+            $stmt = $this->db->prepare("SELECT id, email, created_at FROM users WHERE id = ?");
+            $stmt->execute([$userId]);
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error fetching user data: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    public function changePassword($userId, $currentPassword, $newPassword) {
+        if (strlen($newPassword) < MIN_PASSWORD_LENGTH) {
+            return ['success' => false, 'message' => 'New password must be at least ' . MIN_PASSWORD_LENGTH . ' characters long'];
+        }
+
+        try {
+            // Verify current password
+            $stmt = $this->db->prepare("SELECT password FROM users WHERE id = ?");
+            $stmt->execute([$userId]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$user || !password_verify($currentPassword, $user['password'])) {
+                return ['success' => false, 'message' => 'Current password is incorrect'];
+            }
+
+            // Hash and update new password
+            $hashedPassword = password_hash($newPassword, PASSWORD_HASH_ALGO);
+            $stmt = $this->db->prepare("UPDATE users SET password = ? WHERE id = ?");
+            $stmt->execute([$hashedPassword, $userId]);
+
+            return ['success' => true, 'message' => 'Password successfully updated'];
+        } catch (PDOException $e) {
+            error_log("Error changing password: " . $e->getMessage());
+            return ['success' => false, 'message' => 'An error occurred while changing the password'];
+        }
+    }
+
+    public function getLoginHistory($userId, $limit = 5) {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT ip_address, login_time, success 
+                FROM login_history 
+                WHERE user_id = ? 
+                ORDER BY login_time DESC 
+                LIMIT ?
+            ");
+            $stmt->execute([$userId, $limit]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error fetching login history: " . $e->getMessage());
+            return [];
+        }
     }
 }
