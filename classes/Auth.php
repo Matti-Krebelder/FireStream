@@ -1,5 +1,5 @@
 <?php
-require_once 'Database.php';
+require_once './classes/database.php';
 
 class Auth {
     private $db;
