@@ -1,10 +1,19 @@
 <?php
+require_once 'config.php';
 require_once 'classes/Auth.php';
 $auth = new Auth();
 if (!$auth->isLoggedIn()) {
     header('Location: login.php');
     exit;
 }
+
+$userId = $_SESSION['user_id'] ?? null;
+if (!$userId) {
+    header('Location: logout.php');
+    exit;
+}
+$userData = $auth->getUserData($userId);
+
 function getMovieDetails($title) {
     $apiKey = '4b94f857a0c0c333c98dbd3e1a937e85';
     $searchUrl = "https://api.themoviedb.org/3/search/movie?api_key={$apiKey}&query=" . urlencode($title);
@@ -40,6 +49,7 @@ function getMovieDetails($title) {
     }
     return null;
 }
+
 function renderStarRating($rating) {
     $fullStars = floor($rating);
     $hasHalfStar = ($rating - $fullStars) >= 0.5;
@@ -474,10 +484,12 @@ $movieData = getMovieDetails($movieTitle);
     <header class="header">
         <a href="index.php" class="logo">FireStream</a>
         <div class="nav-icons">
-        <a href="index.php" class="icon"><i class="fas fa-home"></i></a>
-        <a href="profile.php" class="icon active"><i class="fas fa-user"></i></a>
-        <a href="settings.php" class="icon"><i class="fas fa-cog"></i></a>
-        <a href="logout.php" class="icon"><i class="fas fa-sign-out-alt"></i></a>
+            <a href="index.php" class="icon"><i class="fas fa-home"></i></a>
+            <a href="profile.php" class="icon"><i class="fas fa-user"></i></a>
+            <?php if ($userData['is_admin']): ?>
+                <a href="admin.php" class="icon"><i class="fas fa-shield-alt"></i></a>
+            <?php endif; ?>
+            <a href="logout.php" class="icon"><i class="fas fa-sign-out-alt"></i></a>
         </div>
     </header>
 

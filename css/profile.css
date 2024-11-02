@@ -123,11 +123,12 @@ body {
 .submit-button {
     background-color: var(--accent-color);
     color: var(--text-color);
-    padding: 1rem;
+    padding: 0.7rem;
     border: none;
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.3s ease;
+    margin-top: 0.5lvh;
 }
 
 .submit-button:hover {

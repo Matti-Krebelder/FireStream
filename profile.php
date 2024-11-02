@@ -27,18 +27,34 @@ error_log("Login history entries: " . count($loginHistory));
 $message = '';
 $messageClass = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'change_password') {
-    $currentPassword = $_POST['current_password'] ?? '';
-    $newPassword = $_POST['new_password'] ?? '';
-    $confirmPassword = $_POST['confirm_password'] ?? '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['action']) && $_POST['action'] === 'change_password') {
+        $currentPassword = $_POST['current_password'] ?? '';
+        $newPassword = $_POST['new_password'] ?? '';
+        $confirmPassword = $_POST['confirm_password'] ?? '';
 
-    if ($newPassword !== $confirmPassword) {
-        $message = 'New passwords do not match';
-        $messageClass = 'error';
-    } else {
-        $result = $auth->changePassword($userId, $currentPassword, $newPassword);
-        $message = $result['message'];
-        $messageClass = $result['success'] ? 'success' : 'error';
+        if ($newPassword !== $confirmPassword) {
+            $message = 'New passwords do not match';
+            $messageClass = 'error';
+        } else {
+            $result = $auth->changePassword($userId, $currentPassword, $newPassword);
+            $message = $result['message'];
+            $messageClass = $result['success'] ? 'success' : 'error';
+        }
+    }
+    elseif (isset($_POST['action']) && $_POST['action'] === 'update_username') {
+        $newUsername = trim($_POST['username'] ?? '');
+        if (!empty($newUsername)) {
+            $result = $auth->updateUsername($userId, $newUsername);
+            $message = $result['message'];
+            $messageClass = $result['success'] ? 'success' : 'error';
+            if ($result['success']) {
+                $userData = $auth->getUserData($userId); 
+            }
+        } else {
+            $message = 'Username cannot be empty';
+            $messageClass = 'error';
+        }
     }
 }
 ?>
@@ -55,11 +71,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     <header class="header">
         <a href="index.php" class="logo">FireStream</a>
         <div class="nav-icons">
-            <a href="index.php" class="icon"><i class="fas fa-home"></i></a>
-            <a href="profile.php" class="icon"><i class="fas fa-user"></i></a>
-            <a href="settings.php" class="icon"><i class="fas fa-cog"></i></a>
-            <a href="logout.php" class="icon"><i class="fas fa-sign-out-alt"></i></a>
-        </div>
+    <a href="index.php" class="icon"><i class="fas fa-home"></i></a>
+    <a href="profile.php" class="icon"><i class="fas fa-user"></i></a>
+    <?php if ($userData['is_admin']): ?>
+        <a href="admin.php" class="icon"><i class="fas fa-shield-alt"></i></a>
+    <?php endif; ?>
+    <a href="logout.php" class="icon"><i class="fas fa-sign-out-alt"></i></a>
+</div>
     </header>
 
     <main class="profile-container">
@@ -67,13 +85,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             <div class="profile-avatar">
                 <i class="fas fa-user"></i>
             </div>
-            <h1><?php echo htmlspecialchars($userData['email'] ?? ''); ?></h1>
+            <h1><?php echo htmlspecialchars($userData['username'] ?? ''); ?></h1>
+            <p class="user-email"><?php echo htmlspecialchars($userData['email'] ?? ''); ?></p>
             <p>Member since <?php echo isset($userData['created_at']) ? date('F Y', strtotime($userData['created_at'])) : 'N/A'; ?></p>
+            <?php if ($userData['is_admin']): ?>
+                <span class="admin-badge"><i class="fas fa-shield-alt"></i> Administrator</span>
+            <?php endif; ?>
         </div>
 
         <?php if ($message): ?>
             <div class="message <?php echo $messageClass; ?>"><?php echo htmlspecialchars($message); ?></div>
         <?php endif; ?>
+
+        <div class="profile-section">
+            <h2>Update Username</h2>
+            <form class="username-form" method="POST" action="">
+                <input type="hidden" name="action" value="update_username">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" 
+                           value="<?php echo htmlspecialchars($userData['username'] ?? ''); ?>" required>
+                </div>
+                <button type="submit" class="submit-button">Update Username</button>
+            </form>
+        </div>
 
         <div class="profile-section">
             <h2>Change Password</h2>
@@ -119,7 +154,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                         </div>
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <p>No login history available. (User ID: <?php echo htmlspecialchars($userId); ?>)</p>
+                    <p>No login history available.</p>
                 <?php endif; ?>
             </div>
         </div>

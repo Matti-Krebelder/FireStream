@@ -20,7 +20,11 @@ class Auth {
         }
     
         try {
-            $stmt = $this->db->prepare("SELECT id, email, password, is_active FROM users WHERE email = ?");
+            $stmt = $this->db->prepare("
+                SELECT id, email, password, is_active, is_admin, username 
+                FROM users 
+                WHERE email = ?
+            ");
             $stmt->execute([$email]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
     
@@ -79,7 +83,6 @@ class Auth {
             return ['success' => false, 'message' => 'An error occurred during login'];
         }
     }
-    
 
     private function isAccountLocked($email) {
         if (!isset($this->loginAttempts[$email])) {
@@ -112,6 +115,8 @@ class Auth {
     private function createSession($user) {
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['email'] = $user['email'];
+        $_SESSION['username'] = $user['username'];
+        $_SESSION['is_admin'] = $user['is_admin'];
         $_SESSION['last_activity'] = time();
         session_regenerate_id(true);
     }
@@ -136,14 +141,42 @@ class Auth {
         return true;
     }
 
+    public function isAdmin() {
+        return isset($_SESSION['is_admin']) && $_SESSION['is_admin'] == 1;
+    }
+
     public function getUserData($userId) {
         try {
-            $stmt = $this->db->prepare("SELECT id, email, created_at FROM users WHERE id = ?");
+            $stmt = $this->db->prepare("
+                SELECT id, email, username, is_admin, is_active, created_at 
+                FROM users 
+                WHERE id = ?
+            ");
             $stmt->execute([$userId]);
             return $stmt->fetch(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             error_log("Error fetching user data: " . $e->getMessage());
             return null;
+        }
+    }
+
+    public function updateUsername($userId, $newUsername) {
+        try {
+            // Check if username is already taken
+            $stmt = $this->db->prepare("SELECT id FROM users WHERE username = ? AND id != ?");
+            $stmt->execute([$newUsername, $userId]);
+            if ($stmt->fetch()) {
+                return ['success' => false, 'message' => 'Username already taken'];
+            }
+
+            $stmt = $this->db->prepare("UPDATE users SET username = ? WHERE id = ?");
+            $stmt->execute([$newUsername, $userId]);
+            
+            $_SESSION['username'] = $newUsername;
+            return ['success' => true, 'message' => 'Username updated successfully'];
+        } catch (PDOException $e) {
+            error_log("Update username error: " . $e->getMessage());
+            return ['success' => false, 'message' => 'Failed to update username'];
         }
     }
 
