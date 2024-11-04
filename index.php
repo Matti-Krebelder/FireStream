@@ -14,7 +14,7 @@ function cleanMovieTitle($title) {
 }
 
 function getMovieData($title) {
-    $apiKey = '4b94f857a0c0c333c98dbd3e1a937e85';
+    $apiKey = THEMOVIEDB_API_KEY;
     $searchUrl = "https://api.themoviedb.org/3/search/movie?api_key={$apiKey}&query=" . urlencode($title);
     $response = @file_get_contents($searchUrl);
     
@@ -320,7 +320,7 @@ $userData = $auth->getUserData($userId);
 
     <main>
         <?php
-        $moviesDir = 'movies/';
+        $moviesDir = MOVIE_DIR;
         $movies = scandir($moviesDir);
         $moviesByCategory = [];
         $genres = getGenres();

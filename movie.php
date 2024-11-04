@@ -15,7 +15,7 @@ if (!$userId) {
 $userData = $auth->getUserData($userId);
 
 function getMovieDetails($title) {
-    $apiKey = '4b94f857a0c0c333c98dbd3e1a937e85';
+    $apiKey = THEMOVIEDB_API_KEY;
     $searchUrl = "https://api.themoviedb.org/3/search/movie?api_key={$apiKey}&query=" . urlencode($title);
     $response = @file_get_contents($searchUrl);
     
@@ -538,7 +538,7 @@ $movieData = getMovieDetails($movieTitle);
         <h2 class="video-title"><?php echo htmlspecialchars($movieData['title']); ?></h2>
     </div>
     <video class="video-player">
-        <source src="movies/<?php echo $movieData['clean_filename']; ?>.mp4" type="video/mp4">
+        <source src="<?php echo(MOVIE_DIR) ?><?php echo $movieData['clean_filename']; ?>.mp4" type="video/mp4">
         Ihr Browser unterstützt das Video-Tag nicht.
     </video>
     <div class="video-controls">

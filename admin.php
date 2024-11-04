@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $configFile
                     );
                     file_put_contents('config.php', $configFile);
-                    $message = 'Movie directory updated successfully';
+                    $message = 'Movie directory updated successfully reload to see the changes!';
                     $messageClass = 'success';
                 } else {
                     $message = 'Invalid directory path';
@@ -118,21 +118,67 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 break;
 
-            case 'upload_movie':
-                if (isset($_FILES['movie_file'])) {
-                    $file = $_FILES['movie_file'];
-                    $fileName = basename($file['name']);
-                    $targetPath = MOVIE_DIR . $fileName;
+                case 'create_account':
+                    $newUsername = $_POST['new_username'];
+                    $newEmail = $_POST['new_email'];
+                    $newPassword = $_POST['new_password'];
+                    $isAdmin = isset($_POST['is_admin']) ? 1 : 0;
                     
-                    if (move_uploaded_file($file['tmp_name'], $targetPath)) {
-                        $message = 'Movie uploaded successfully';
+                    try {
+                        $stmt = Database::getInstance()->getConnection()->prepare(
+                            "INSERT INTO users (username, email, password, is_admin) VALUES (?, ?, ?, ?)"
+                        );
+                        $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+                        $stmt->execute([$newUsername, $newEmail, $hashedPassword, $isAdmin]);
+                        $message = 'Account created successfully';
                         $messageClass = 'success';
-                    } else {
-                        $message = 'Error uploading movie';
+                    } catch (PDOException $e) {
+                        $message = 'Error creating account: ' . $e->getMessage();
                         $messageClass = 'error';
                     }
-                }
-                break;
+                    break;
+                
+                // MODIFIED FUNCTION - Replace the existing upload_movie case
+                case 'upload_movie':
+                    if (isset($_FILES['movie_file'])) {
+                        $file = $_FILES['movie_file'];
+                        $maxFileSize = 5 * 1024 * 1024 * 1024; // 5GB in bytes
+                        
+                        if ($file['size'] > $maxFileSize) {
+                            $message = 'File size exceeds 5GB limit';
+                            $messageClass = 'error';
+                        } else {
+                            $fileName = basename($file['name']);
+                            $targetPath = MOVIE_DIR . $fileName;
+                            
+                            // Create upload status file
+                            $statusFile = sys_get_temp_dir() . '/' . md5($fileName) . '_upload_status.txt';
+                            file_put_contents($statusFile, '0');
+                            
+                            $chunk = 1024 * 1024; // 1MB chunks
+                            $in = fopen($file['tmp_name'], 'rb');
+                            $out = fopen($targetPath, 'wb');
+                            
+                            $totalSize = filesize($file['tmp_name']);
+                            $uploadedSize = 0;
+                            
+                            while (!feof($in)) {
+                                $buffer = fread($in, $chunk);
+                                fwrite($out, $buffer);
+                                $uploadedSize += strlen($buffer);
+                                $progress = ($uploadedSize / $totalSize) * 100;
+                                file_put_contents($statusFile, $progress);
+                            }
+                            
+                            fclose($in);
+                            fclose($out);
+                            unlink($statusFile);
+                            
+                            $message = 'Movie uploaded successfully';
+                            $messageClass = 'success';
+                        }
+                    }
+                    break;
         }
     }
 }
@@ -417,6 +463,30 @@ $movies = array_diff(scandir(MOVIE_DIR), array('.', '..'));
 
         <div id="users" class="tab-content">
             <div class="section">
+            <h2>Create New Account</h2>
+            <form method="POST" action="">
+                <input type="hidden" name="action" value="create_account">
+                <div class="form-group">
+                    <label for="new_username">Username:</label>
+                    <input type="text" id="new_username" name="new_username" required>
+                </div>
+                <div class="form-group">
+                    <label for="new_email">Email:</label>
+                    <input type="email" id="new_email" name="new_email" required>
+                </div>
+                <div class="form-group">
+                    <label for="new_password">Password:</label>
+                    <input type="password" id="new_password" name="new_password" required>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="is_admin"> Make Admin
+                    </label>
+                </div>
+                <button type="submit" class="submit-button">Create Account</button>
+            </form>
+        </div>
+            <div class="section">
                 <h2>User Management</h2>
                 <table class="user-list">
                     <thead>
@@ -465,6 +535,8 @@ $movies = array_diff(scandir(MOVIE_DIR), array('.', '..'));
             </div>
         </div>
 
+        
+
         <div id="movies" class="tab-content">
             <div class="section">
                 <h2>Movie Management</h2>
@@ -478,6 +550,7 @@ $movies = array_diff(scandir(MOVIE_DIR), array('.', '..'));
                         <p>or drag and drop files here</p>
                     </form>
                 </div>
+                
                 
                 <table class="movie-list">
                     <thead>
@@ -617,6 +690,41 @@ $movies = array_diff(scandir(MOVIE_DIR), array('.', '..'));
                 movieFile.form.submit();
             }
         });
+
+        movieFile.addEventListener('change', async function(e) {
+    if (this.files.length) {
+        const file = this.files[0];
+        if (file.size > 5 * 1024 * 1024 * 1024) { // 5GB
+            alert('File size exceeds 5GB limit');
+            return;
+        }
+        
+        const formData = new FormData(this.form);
+        const statusId = md5(file.name); // You'll need to implement or include an MD5 function
+        
+        // Show progress bar
+        dropZone.innerHTML += '<div class="upload-progress" style="width: 100%; height: 20px; background: #333; margin-top: 10px;"><div class="progress-bar" style="width: 0%; height: 100%; background: #2196F3; transition: width 0.3s;"></div></div>';
+        const progressBar = dropZone.querySelector('.progress-bar');
+        
+        this.form.submit();
+        
+        // Monitor progress
+        const checkProgress = setInterval(async () => {
+            try {
+                const response = await fetch(`check_upload_progress.php?id=${statusId}`);
+                const progress = await response.text();
+                if (progress === '100') {
+                    clearInterval(checkProgress);
+                    location.reload();
+                } else {
+                    progressBar.style.width = `${progress}%`;
+                }
+            } catch (error) {
+                clearInterval(checkProgress);
+            }
+        }, 1000);
+    }
+});
     </script>
 
     <?php
