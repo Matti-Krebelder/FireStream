@@ -32,3 +32,5 @@ CREATE TABLE `users` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
+INSERT INTO `users` (`is_admin`, `username`, `id`, `email`, `password`, `is_active`, `created_at`) VALUES
+(1, 'Firestream', 8, 'Firestream@starlight-studios.de', '$2y$10$V.2zoktqcdwkjhlcuhA9ne9biDspYvLsAUUZYoPTuP/dZpqz53zIO', 1, '2024-11-04 16:27:03');
